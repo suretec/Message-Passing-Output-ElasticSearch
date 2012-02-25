@@ -11,6 +11,9 @@ requires 'Try::Tiny';
 requires 'ElasticSearch';
 requires 'ElasticSearch::Transport::AEHTTP';
 requires 'MooseX::Types';
+requires 'Log::Stash' => '0.001';
+
+test_requires 'Test::More' => '0.88';
 
 WriteAll;
 
