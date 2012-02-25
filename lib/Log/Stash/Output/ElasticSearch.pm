@@ -9,7 +9,7 @@ use namespace::autoclean;
 our $VERSION = '0.001';
 $VERSION = eval $VERSION;
 
-with 'Log::Stash::Mixin::Output';
+with 'Log::Stash::Role::Output';
 
 has elasticsearch_servers => (
     isa => ArrayRef[Str],
