@@ -1,0 +1,16 @@
+NAME
+    Log::Stash::Output::ElasticSearch - output logstash messages into
+    ElasticSearch.
+
+DESCRIPTION
+SEE ALSO
+    Log::Stash
+    <http://logstash.net>
+
+AUTHOR
+    Tomas (t0m) Doran <bobtfish@bobtfish.net>
+
+COPYRIGHT
+LICENSE
+    XXX - TODO
+

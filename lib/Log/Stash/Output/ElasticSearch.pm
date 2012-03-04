@@ -135,15 +135,7 @@ Log::Stash::Output::ElasticSearch - output logstash messages into ElasticSearch.
 
 Tomas (t0m) Doran <bobtfish@bobtfish.net>
 
-=head1 SPONSORSHIP
-
-This module exists due to the wonderful people at
-L<Suretec Systems|http://www.suretecsystems.com/> who sponsored it's
-development.
-
 =head1 COPYRIGHT
-
-Copyright Suretec Systems 2012.
 
 =head1 LICENSE
 
