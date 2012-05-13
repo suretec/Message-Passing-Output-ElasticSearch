@@ -4,6 +4,12 @@ use ElasticSearch;
 use AnyEvent;
 use Scalar::Util qw/ weaken /;
 use MooseX::Types::Moose qw/ ArrayRef Str Bool /;
+use Scalar::Util qw/ weaken /;
+use Try::Tiny qw/ try catch /;
+use aliased 'DateTime' => 'DT';
+use MooseX::Types::ISO8601 qw/ ISO8601DateTimeStr /;
+use MooseX::Types::DateTime qw/ DateTime /;
+use JSON qw/ encode_json /;
 use namespace::autoclean;
 
 our $VERSION = '0.001';
@@ -41,40 +47,56 @@ has queue => (
     clearer => '_clear_queue',
 );
 
+has _indexes => (
+    isa => 'HashRef',
+    lazy => 1,
+    is => 'ro',
+    default => sub { {} },
+    clearer => '_clear_indexes',
+);
+
+has verbose => (
+    isa => 'Bool',
+    is => 'ro',
+    default => sub {
+        -t STDIN
+    },
+);
+
 sub consume {
     my ($self, $data) = @_;
-    return unless $data;
+     return unless $data;
     my $date;
-    if ($data->{date}) {
-        my @datefields = qw/ year month day /;
-        my @timefields = qw/ hour minute second nanosecond /;
-        my @datetimefields = (@datefields, @timefields);
-        my @fields = map { $_ || 0 } $data->{date} =~ /^(\d{4})-(\d{2})-(\d{2})/;
-        $date = join('.', @fields);
+    if (my $epochtime = delete($data->{epochtime})) {
+        $date = DT->from_epoch(epoch => $epochtime);
+        delete($data->{date});
     }
-    else {
-        $date = DateTime->from_epoch(epoch => time()) . "";
+    elsif (my $try_date = delete($data->{date})) {
+        if (is_ISO8601DateTimeStr($try_date)) {
+            $date = to_DateTime($try_date);
+        }
     }
+    $date ||= DT->from_epoch(epoch => time());
     my $type = $data->{__CLASS__} || 'unknown';
-    foreach my $name (qw/SYSLOGBASE2 timestamp MONTH MONTHDAY TIME HOUR MINUTE SECOND timestamp8601 YEAR MONTHNUM ISO8601_TIMEZONE SYSLOGFACILITY facility priority" logsource IPORHOST HOSTNAME IP SYSLOGPROG/) {
-        $data->{$name} ||= [];
+    my $index_name = 'logstash-' . $date->year . '.' . sprintf("%02d", $date->month) . '.' . sprintf("%02d", $date->day);
+    if ($index_name !~ /logstash-2012/) {
+        use Data::Dumper;
+        die "BUG - We generated a message from before 2012 - Payload " . Dumper($data);
     }
+    $self->_indexes->{$index_name} = 1;
     my $to_queue = {
         type => $type,
-        index => 'logstash-' . (ref($date) ? $date->year . '.' . sprintf("%02d", $date->month) . '.' . sprintf("%02d", $date->day) : $date),
+        index => $index_name,
         data => {
-            '@timestamp' => DateTime->from_epoch(epoch => time()) . "", # FIXME!!
+            '@timestamp' => to_ISO8601DateTimeStr($date),
             '@tags' => [],
-            '@source' => "lies",
             '@type' => $type,
-            '@source_host' => 'moo',
-            '@source_path' => 'quack',
-            '@message' => exists($data->{message}) ? $data->{message} : 'unknown',
+            '@source_host' => delete($data->{hostname}) || 'none',
+            '@message' => exists($data->{message}) ? delete($data->{message}) : encode_json($data),
             '@fields' => $data,
         },
-        exists($data->{uuid}) ? ( id => $data->{uuid} ) : (),
+        exists($data->{uuid}) ? ( id => delete($data->{uuid}) ) : (),
     };
-    #use Data::Dumper; warn Dumper($to_queue);
     push(@{$self->queue}, $to_queue);
     if (scalar(@{$self->queue}) > 1000) {
         $self->_flush;
@@ -100,17 +122,70 @@ has _flush_timer => (
     },
 );
 
+has _needs_optimize => (
+    isa => Bool,
+    is => 'rw',
+    default => 0,
+);
+
+has _optimize_timer => (
+    is => 'ro',
+    default => sub {
+        my $self = shift;
+        weaken($self);
+        # FIXME!!! This is over-aggressive, you only need to do indexes
+        #          when you've finished writing them.
+        my $time = 60 * 60; # Every hour
+        AnyEvent->timer(
+            after => $time,
+            interval => $time,
+            cb => sub { $self->_needs_optimize(1) },
+        );
+    },
+);
+
+sub _do_optimize {
+    my $self = shift;
+    weaken($self);
+    $self->_am_flushing(1);
+    my @indexes = sort keys( %{ $self->_indexes } );
+    $self->_clear_indexes;
+    $self->_es->optimize_index(
+        index => $indexes[0],
+        wait_for_merge => 1,
+        max_num_segments => 2,
+    )->cb(sub {
+        warn("Did optimize of " . $indexes[0] . "\n") if $self->verbose;
+        $self->_am_flushing(0); $self->_needs_optimize(0) });
+}
+
 sub _flush {
     my $self = shift;
-    my $weak_self = $self;
+    weaken($self);
     return if $self->_am_flushing;
+    if ($self->_needs_optimize) {
+        return $self->_do_optimize;
+    }
     my $queue = $self->queue;
     return unless scalar @$queue;
     $self->_clear_queue;
     $self->_am_flushing(1);
-    my $res = $self->_es->bulk_index($queue);
-    weaken($self);
-    $res->cb(sub { $self->_am_flushing(0); });
+    my $res = $self->_es->bulk_index(
+        docs => $queue,
+        consistency => 'quorum',
+    );
+    $res->cb(sub {
+        my $res = shift;
+        my @indexes = sort keys( %{ $self->_indexes } );
+        warn("Indexed " . scalar(@$queue) . " " . join(", ", @indexes) . "\n") if $self->verbose;
+        $self->_am_flushing(0);
+        foreach my $result (@{ $res->{results} }) {
+            if (!$result->{index}->{ok} && !$result->{create}->{ok}) {
+                warn "Indexing failure: " . Dumper($result) . "\n";
+                last;
+            }
+        }
+    });
 }
 
 1;
