@@ -196,6 +196,12 @@ Message::Passing::Output::ElasticSearch - output logstash messages into ElasticS
 
 =head1 DESCRIPTION
 
+=head1 METHODS
+
+=head2 consume ($msg)
+
+Consumes a message, queuing it for consumption by ElasticSearch
+
 =head1 SEE ALSO
 
 =over
