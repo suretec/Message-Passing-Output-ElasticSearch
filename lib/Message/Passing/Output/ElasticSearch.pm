@@ -1,4 +1,4 @@
-package Log::Stash::Output::ElasticSearch;
+package Message::Passing::Output::ElasticSearch;
 use Moose;
 use ElasticSearch;
 use AnyEvent;
@@ -15,7 +15,7 @@ use namespace::autoclean;
 our $VERSION = '0.001';
 $VERSION = eval $VERSION;
 
-with 'Log::Stash::Role::Output';
+with 'Message::Passing::Role::Output';
 
 has elasticsearch_servers => (
     isa => ArrayRef[Str],
@@ -192,7 +192,7 @@ sub _flush {
 
 =head1 NAME
 
-Log::Stash::Output::ElasticSearch - output logstash messages into ElasticSearch.
+Message::Passing::Output::ElasticSearch - output logstash messages into ElasticSearch.
 
 =head1 DESCRIPTION
 
@@ -200,7 +200,7 @@ Log::Stash::Output::ElasticSearch - output logstash messages into ElasticSearch.
 
 =over
 
-=item L<Log::Stash>
+=item L<Message::Passing>
 
 =item L<http://logstash.net>
 

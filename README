@@ -1,10 +1,10 @@
 NAME
-    Log::Stash::Output::ElasticSearch - output logstash messages into
+    Message::Passing::Output::ElasticSearch - output logstash messages into
     ElasticSearch.
 
 DESCRIPTION
 SEE ALSO
-    Log::Stash
+    Message::Passing
     <http://logstash.net>
 
 AUTHOR
