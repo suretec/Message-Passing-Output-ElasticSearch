@@ -3,6 +3,10 @@ NAME
     ElasticSearch.
 
 DESCRIPTION
+METHODS
+  consume ($msg)
+    Consumes a message, queuing it for consumption by ElasticSearch
+
 SEE ALSO
     Message::Passing
     <http://logstash.net>
