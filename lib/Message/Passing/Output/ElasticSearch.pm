@@ -12,7 +12,7 @@ use MooseX::Types::DateTime qw/ DateTime /;
 use JSON qw/ encode_json /;
 use namespace::autoclean;
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 $VERSION = eval $VERSION;
 
 with 'Message::Passing::Role::Output';
