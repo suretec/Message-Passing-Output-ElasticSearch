@@ -17,6 +17,7 @@ requires 'ElasticSearch';
 requires 'ElasticSearch::Transport::AEHTTP';
 requires 'MooseX::Types';
 requires 'Message::Passing' => '0.001';
+requires 'aliased' => '0';
 
 test_requires 'Test::More' => '0.88';
 
