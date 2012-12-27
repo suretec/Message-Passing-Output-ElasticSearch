@@ -33,6 +33,7 @@ has _es => (
             transport => "aehttp",
             servers => $self->elasticsearch_servers,
             timeout => 30,
+            no_refresh => 1,
  #           trace_calls => 1,
         );
     }
