@@ -80,10 +80,6 @@ sub consume {
     $date ||= DT->from_epoch(epoch => time());
     my $type = $data->{__CLASS__} || 'unknown';
     my $index_name = 'logstash-' . $date->year . '.' . sprintf("%02d", $date->month) . '.' . sprintf("%02d", $date->day);
-    if ($index_name !~ /logstash-2012/) {
-        use Data::Dumper;
-        die "BUG - We generated a message from before 2012 - Payload " . Dumper($data);
-    }
     $self->_indexes->{$index_name} = 1;
     my $to_queue = {
         type => $type,
