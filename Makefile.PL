@@ -17,7 +17,12 @@ requires 'ElasticSearch';
 requires 'ElasticSearch::Transport::AEHTTP';
 requires 'MooseX::Types';
 requires 'Message::Passing' => '0.001';
-
+requires 'aliased' => '0';
+requires 'Scalar::Util' => '0';
+requires 'MooseX::Types::Moose' => '0';
+requires 'MooseX::Types::ISO8601' => '0';
+requires 'MooseX::Types::DateTime' => '0';
+requires 'JSON' => '0';
 test_requires 'Test::More' => '0.88';
 
 author_requires(
@@ -37,4 +42,3 @@ if ($Module::Install::AUTHOR) {
 }
 
 WriteAll;
-

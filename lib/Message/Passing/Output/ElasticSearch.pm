@@ -13,7 +13,7 @@ use JSON qw/ encode_json /;
 use Data::Dumper;
 use namespace::autoclean;
 
-our $VERSION = '0.001';
+our $VERSION = '0.003';
 $VERSION = eval $VERSION;
 
 with 'Message::Passing::Role::Output';
