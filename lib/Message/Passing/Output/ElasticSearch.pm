@@ -205,6 +205,9 @@ has _archive_timer => (
     },
 );
 
+# _archive_index run 1 time per day to close index older than 7 days and delete
+# index older than 30 days
+#
 sub _archive_index {
     my ($self) = @_;
 
@@ -212,16 +215,15 @@ sub _archive_index {
 
     my $dt_to_close = $dt->clone->subtract(days => 7);
     my $index_to_close = $self->_index_name_by_dt($dt_to_close);
-    my $result = $self->_es->close_index(index => $index_to_close);
-    warn "Close index: $index_to_close" . Dumper($result) . "\n";
+    $self->_es->close_index(index => $index_to_close)
+        ->cb( sub { warn "Close index: $index_to_close \n" if $self->verbose; });
 
     my $dt_to_delete = $dt->clone->subtract(days => 30);
     my $index_to_delete = $self->_index_name_by_dt($dt_to_delete);
-    $result = $self->_es->delete_index(
+    $self->_es->delete_index(
         index           => $index_to_delete,
         ignore_missing  => 1,
-    );
-    warn "Delete index: $index_to_delete" . Dumper($result) . "\n";
+    )->cb( sub { warn "Delete index: $index_to_delete \n" if $self->verbose;});
 }
 
 
