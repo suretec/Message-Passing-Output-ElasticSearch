@@ -198,7 +198,7 @@ has _archive_timer => (
         weaken($self);
         my $time = 60 * 60 * 24; # Every day
         AnyEvent->timer(
-            after => $time,
+            after => 60, # delay 1 hour to start first loop
             interval => $time,
             cb => sub { $self->_archive_index() },
         );
