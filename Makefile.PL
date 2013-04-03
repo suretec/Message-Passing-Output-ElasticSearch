@@ -4,7 +4,7 @@ use inc::Module::Install;
 use Module::Install::Authority;
 
 all_from 'lib/Message/Passing/Output/ElasticSearch.pm';
-authority('GHENRY');
+authority('cpan:GHENRY');
 resources(
     repository => "git://github.com/suretec/Message-Passing-Output-ElasticSearch.git",
 );
