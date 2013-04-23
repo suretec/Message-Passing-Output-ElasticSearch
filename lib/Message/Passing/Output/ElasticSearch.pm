@@ -233,13 +233,26 @@ sub _archive_index {
 
 Message::Passing::Output::ElasticSearch - output logstash messages into ElasticSearch.
 
+=head1 SYNOPSIS
+
+    message-pass --input STDIN --output ElasticSearch --output_options '{"elasticsearch_servers": ["localhost:9200", "192.0.2.29:9200"]}'
+
 =head1 DESCRIPTION
 
 =head1 METHODS
 
+=head2 elasticsearch_servers
+
+A required attribute for the elasticsearch server FQDNs or IP addresses including the
+port which normally is 9200.
+
+=head2 verbose
+
+A boolean attribute that defaults to true if STDIN is opened to a tty.
+
 =head2 consume ($msg)
 
-Consumes a message, queuing it for consumption by ElasticSearch
+Consumes a message, queuing it for consumption by ElasticSearch.
 
 =head1 SEE ALSO
 
