@@ -243,7 +243,7 @@ Message::Passing::Output::ElasticSearch - output logstash messages into ElasticS
 
 =head2 elasticsearch_servers
 
-A required attribute for the elasticsearch server FQDNs or IP addresses including the
+A required attribute for the ElasticSearch server FQDNs or IP addresses including the
 port which normally is 9200.
 
 =head2 verbose
