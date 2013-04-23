@@ -8,6 +8,7 @@ authority('cpan:GHENRY');
 resources(
     repository => "git://github.com/suretec/Message-Passing-Output-ElasticSearch.git",
 );
+license 'perl';
 
 requires 'Moose';
 requires 'namespace::autoclean';
