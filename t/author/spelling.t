@@ -25,6 +25,12 @@ add_stopwords(qw(
     logstash
     FQDNs
     IP
+    UTC
+    datetime
+    epochtime
+    hostname
+    timestamp
+    uuid
 ));
 set_spell_cmd('aspell list -l en');
 all_pod_files_spelling_ok();
