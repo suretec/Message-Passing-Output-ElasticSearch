@@ -48,6 +48,15 @@ METHODS
     A required attribute for the ElasticSearch server FQDNs or IP addresses
     including the port which normally is 9200.
 
+  optimize
+    An optional boolean attribute, defaults to true. If true, the
+    ElasticSearch server's "optimize" method will be called periodically for
+    each index that a message has been consumed for.
+
+  archive
+    An optional boolean attribute, defaults to true. If true, a task will
+    run once a day to delete indexes older than 30 days.
+
   verbose
     A boolean attribute that defaults to true if STDIN is opened to a tty.
 
