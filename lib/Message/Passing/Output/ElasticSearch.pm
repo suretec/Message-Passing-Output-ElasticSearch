@@ -24,6 +24,12 @@ has elasticsearch_servers => (
     required => 1,
 );
 
+has format => (
+    isa => 'Str',
+    is => 'ro',
+    default => 'logstash',
+);
+
 has _es => (
     is => 'ro',
     isa => 'ElasticSearch',
@@ -65,9 +71,10 @@ has verbose => (
     },
 );
 
-sub consume {
+my %FORMAT;
+
+$FORMAT{logstash} = sub {
     my ($self, $data) = @_;
-     return unless $data;
     my $date;
     if (my $epochtime = delete($data->{epochtime})) {
         $date = DT->from_epoch(epoch => $epochtime);
@@ -95,6 +102,23 @@ sub consume {
         },
         exists($data->{uuid}) ? ( id => delete($data->{uuid}) ) : (),
     };
+    return $to_queue;
+};
+
+$FORMAT{raw} = sub {
+    my ($self, $data) = @_;
+    my $to_queue = {
+        type  => (delete $data->{type}) || 'unknown',
+        index => (delete $data->{index}) || 'unknown',
+        data => $data,
+    };
+    return $to_queue;
+};
+
+sub consume {
+    my ($self, $data) = @_;
+    my $to_queue = $FORMAT{$self->format}($self, $data);
+    $self->_indexes->{$to_queue->{index}} = 1;
     push(@{$self->queue}, $to_queue);
     if (scalar(@{$self->queue}) > 1000) {
         $self->_flush;
@@ -291,6 +315,11 @@ Is set to all not otherwise processed message attributes.
 
 A required attribute for the ElasticSearch server FQDNs or IP addresses including the
 port which normally is 9200.
+
+=head2 format
+
+Mechanism to use to format the consumed message before sending it on to
+ElasticSearch. Options are C<logstash> and C<raw>.
 
 =head2 verbose
 
