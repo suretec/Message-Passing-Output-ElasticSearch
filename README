@@ -48,6 +48,10 @@ METHODS
     A required attribute for the ElasticSearch server FQDNs or IP addresses
     including the port which normally is 9200.
 
+  format
+    Mechanism to use to format the consumed message before sending it on to
+    ElasticSearch. Options are "logstash" and "raw".
+
   verbose
     A boolean attribute that defaults to true if STDIN is opened to a tty.
 
