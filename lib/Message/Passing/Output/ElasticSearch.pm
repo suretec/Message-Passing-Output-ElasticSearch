@@ -24,6 +24,18 @@ has elasticsearch_servers => (
     required => 1,
 );
 
+has optimize => (
+    isa => 'Bool',
+    is => 'ro',
+    default => 1,
+);
+
+has archive => (
+    isa => 'Bool',
+    is => 'ro',
+    default => 1,
+);
+
 has _es => (
     is => 'ro',
     isa => 'ElasticSearch',
@@ -136,6 +148,7 @@ has _optimize_timer => (
     default => sub {
         my $self = shift;
         weaken($self);
+        return unless $self->optimize;
         # FIXME!!! This is over-aggressive, you only need to do indexes
         #          when you've finished writing them.
         my $time = 60 * 60; # Every hour
@@ -150,6 +163,7 @@ has _optimize_timer => (
 sub _do_optimize {
     my $self = shift;
     weaken($self);
+    return unless $self->optimize;
     $self->_am_flushing(1);
     my @indexes = sort keys( %{ $self->_indexes } );
     $self->_clear_indexes;
@@ -196,6 +210,7 @@ has _archive_timer => (
     default => sub {
         my $self = shift;
         weaken($self);
+        return unless $self->archive;
         my $time = 60 * 60 * 24; # Every day
         AnyEvent->timer(
             after => 60, # delay 1 hour to start first loop
@@ -210,6 +225,7 @@ has _archive_timer => (
 #
 sub _archive_index {
     my ($self) = @_;
+    return unless $self->archive;
 
     my $dt = DT->from_epoch(epoch => time());
 
@@ -291,6 +307,17 @@ Is set to all not otherwise processed message attributes.
 
 A required attribute for the ElasticSearch server FQDNs or IP addresses including the
 port which normally is 9200.
+
+=head2 optimize
+
+An optional boolean attribute, defaults to true. If true, the ElasticSearch
+server's C<optimize> method will be called periodically for each index that a
+message has been consumed for.
+
+=head2 archive
+
+An optional boolean attribute, defaults to true. If true, a task will run once
+a day to delete indexes older than 30 days.
 
 =head2 verbose
 
