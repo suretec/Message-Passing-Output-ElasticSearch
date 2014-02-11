@@ -3,7 +3,7 @@ use Moose;
 use ElasticSearch;
 use AnyEvent;
 use Scalar::Util qw/ weaken /;
-use MooseX::Types::Moose qw/ ArrayRef Str Bool /;
+use MooseX::Types::Moose qw/ ArrayRef Str Bool Int /;
 use Scalar::Util qw/ weaken /;
 use Try::Tiny qw/ try catch /;
 use aliased 'DateTime' => 'DT';
@@ -63,6 +63,24 @@ has verbose => (
     default => sub {
         -t STDIN
     },
+);
+
+has housekeeping => (
+    isa => Bool,
+    is  => 'ro',
+    default => 1,
+);
+
+has close_after_days => (
+    isa => Int,
+    is => 'ro',
+    default => 7,
+);
+
+has delete_after_days => (
+    isa => Int,
+    is => 'ro',
+    default => 30,
 );
 
 sub consume {
@@ -195,13 +213,18 @@ has _archive_timer => (
     is => 'ro',
     default => sub {
         my $self = shift;
-        weaken($self);
-        my $time = 60 * 60 * 24; # Every day
-        AnyEvent->timer(
-            after => 60, # delay 1 hour to start first loop
-            interval => $time,
-            cb => sub { $self->_archive_index() },
-        );
+        if ($self->housekeeping) {
+            weaken($self);
+            my $time = 60 * 60 * 24; # Every day
+            return AnyEvent->timer(
+                after => 60, # delay 1 hour to start first loop
+                interval => $time,
+                cb => sub { $self->_archive_index() },
+            );
+        }
+        else {
+            return undef;
+        }
     },
 );
 
@@ -213,12 +236,12 @@ sub _archive_index {
 
     my $dt = DT->from_epoch(epoch => time());
 
-    my $dt_to_close = $dt->clone->subtract(days => 7);
+    my $dt_to_close = $dt->clone->subtract(days => $self->close_after_days);
     my $index_to_close = $self->_index_name_by_dt($dt_to_close);
     $self->_es->close_index(index => $index_to_close)
         ->cb( sub { warn "Close index: $index_to_close \n" if $self->verbose; });
 
-    my $dt_to_delete = $dt->clone->subtract(days => 30);
+    my $dt_to_delete = $dt->clone->subtract(days => $self->delete_after_days);
     my $index_to_delete = $self->_index_name_by_dt($dt_to_delete);
     $self->_es->delete_index(
         index           => $index_to_delete,
